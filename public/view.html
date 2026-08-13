@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="shortcut icon" href="/assets/favicon.png" type="image/x-icon">
+    <title>Music Manager</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,400;0,700;0,900;1,400;1,700;1,900&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="/style.css">
+    <script src="/script.js" defer></script>
+</head>
+<body>
+    <header>
+        <!--<div id="client-online"></div>-->
+        <img src="/assets/pfp-mia.png">
+        <h1 id="home-btn">Music Manager</h1>
+        <div id="header-search">
+            <input id="search-input" type="text" placeholder="Recherche tes musiques...">
+        </div>
+        <div id="blind-test-btn">Blind Test</div>
+        <div id="streamdeck-btn">Deck</div>
+    </header>
+
+    <main>
+        <div id="playlist" class="page">
+            <div class="list"></div>
+        </div>
+        <div id="main-content">
+            <!--<div class="page">
+                <div class="author style-thumbnail neon light">
+                    <img src="/assets/neuro.jpg">
+                    <h1>Neuro Sama</h1>
+                </div>
+                <div class="list">
+                    <div class="post">
+                        <div class="frame style-thumbnail">
+                            <img src="/post/image/placeholder.png">
+                        </div>
+                        <h1>Somebody That I Used To Know</h1>
+                    </div>
+                </div>
+            </div>-->
+        </div>
+    </main>
+
+    <div id="context-menu" class="hidden">
+        <img id="context-fav-btn" src="/assets/fav-icon.svg">
+        <img id="context-add-post-btn" src="/assets/queue-icon.svg">
+        <img id="context-play-only-btn" src="/assets/play-icon.svg">
+        <img id="context-add-queue-btn" src="/assets/queue-icon.svg">
+        <img id="context-edit-btn" src="/assets/settings-icon.svg">
+    </div>
+
+    <div id="edit-overlay" class="hidden">
+        <div class="edit-modal">
+            <h2 style="margin-bottom: 20px; font-style: italic;">ÉDITION DU POST</h2>
+            <form id="edit-form">
+                <div class="form-grid">
+                    
+                    <!-- Sélecteur d'image visuel -->
+                    <div class="form-group full-width">
+                        <label>Sélectionner l'image (Dossier /post/image)</label>
+                        <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                            <!-- Bouton Upload -->
+                            <button type="button" id="upload-trigger" class="btn-secondary">📤 Uploader une image</button>
+                            <input type="file" id="image-upload-input" accept="image/*" style="display: none;">
+                        </div>
+                        
+                        <div id="image-grid-selector" class="image-grid-container">
+                            <!-- Injecté par JS -->
+                        </div>
+                        <input type="hidden" id="edit-img-path">
+                    </div>
+
+                    <!-- Catégorie / Auteur -->
+                    <div class="form-group">
+                        <label>Catégorie (Auteur)</label>
+                        <select id="edit-author-id"></select>
+                    </div>
+
+                    <!-- Date -->
+                    <div class="form-group">
+                        <label>Date de publication</label>
+                        <input type="datetime-local" id="edit-date" step="1">
+                    </div>
+
+                    <!-- Titre -->
+                    <div class="form-group full-width">
+                        <label>Titre de la musique</label>
+                        <input type="text" id="edit-name" placeholder="Nom du morceau">
+                    </div>
+
+                    <!-- Audio -->
+                    <div class="form-group full-width">
+                        <label>Aperçu & Chemin Audio</label>
+                        <audio id="edit-preview-audio" controls style="width: 100%; margin-bottom: 5px;"></audio>
+                        <input type="text" id="edit-audio-path" placeholder="/post/music/exemple.mp3">
+                    </div>
+                </div>
+
+                <div class="edit-actions">
+                    <button type="button" id="edit-cancel-btn">ANNULER</button>
+                    <button type="submit" id="edit-save-btn">SAUVEGARDER</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <footer>
+        <div id="player-frame">
+            <div id="post-album" class="style-thumbnail">
+                <img id="player-album" src="/assets/neuro.jpg">
+            </div>
+            <div id="post-img" class="style-thumbnail neon light">
+                <img id="player-img" src="/assets/neuro.jpg">
+            </div>
+            <div id="post-info">
+                <h1>Somebody That I Used To Know</h1>
+                <h3>Neuro Sama</h3>
+            </div>
+        </div>
+        <div id="bar-bg">
+            <div id="queue-list" class="page">
+                <div class="list"></div>
+            </div>
+
+            <div id="player-controls">
+                <input 
+                    id="player-volume-slider"
+                    type="range"
+                    min="0"
+                    max="200"
+                    value="20"
+                    step="20"
+                >
+                <button id="player-previous-btn">
+                    <img src="/assets/skip-icon.svg">
+                </button>
+                <button id="player-loop-btn">
+                    <img id="loop-icon" src="/assets/loop-icon.svg">
+                </button>
+                <button id="player-stop-btn">
+                    <img src="/assets/stop-icon.svg">
+                </button>
+                <button id="player-play-btn">
+                    <img id="play-icon" src="/assets/play-icon.svg">
+                    <img id="pause-icon" src="/assets/pause-icon.svg">
+                </button>
+                <button id="player-next-btn">
+                    <img src="/assets/skip-icon.svg">
+                </button>
+            </div>
+            <div id="progress-bar">
+                <div id="timecode-bar"></div>
+            </div>
+        </div>
+    </footer>
+
+    <div class="steam-startup">
+        <div class="logo-container">
+            <div class="circle-glow"></div>
+            <h1 class="logo-text">MIA</h1>
+            <div class="loader-bar">
+                <div class="loader-progress"></div>
+            </div>
+            <p class="sub-text">Music Manager</p>
+        </div>
+    </div>
+</body>
+</html>
