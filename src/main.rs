@@ -1,3 +1,11 @@
+mod database;
+mod websocket;
+mod discord;
+mod types;
+
+use database::*;
+use websocket::*;
+
 use axum::{
     extract::{ws::{Message, WebSocket, WebSocketUpgrade}, State},
     response::IntoResponse,
@@ -9,37 +17,12 @@ use std::sync::Arc;
 use tokio::sync::broadcast;
 use tower_http::services::ServeDir;
 
-#[derive(Deserialize, Debug)]
-struct ClientEvent {
-    event: String,
-    data: serde_json::Value,
-}
-
-
-#[derive(Serialize, Clone)]
-struct ServerEvent<T> {
-    event: String,
-    data: T,
-}
-
-fn send_to_client<T: Serialize>(tx: &broadcast::Sender<String>, event_name: &str, payload: T) {
-    let packet = ServerEvent {
-        event: event_name.to_string(),
-        data: payload,
-    };
-
-    if let Ok(json) = serde_json::to_string(&packet) {
-        // .send() diffuse le message à tous les abonnés connectés
-        let _ = tx.send(json);
-    }
-}
-
 #[tokio::main]
 async fn main() {
+    // TX Broadcast Socket
     let (tx, _) = broadcast::channel::<String>(100);
     let tx = Arc::new(tx);
-
-    let tx_clone = tx.clone();
+    /*let tx_clone = tx.clone();
     tokio::spawn(async move {
         let mut tick = 0;
         loop {
@@ -47,20 +30,32 @@ async fn main() {
             tick += 1;
 
             // Le serveur envoie un tick en temps réel à tout le monde !
-            send_to_client(&tx_clone, "tick:update", serde_json::json!({
+            send_clients(&tx_clone, "tick:update", serde_json::json!({
                 "tick": tick,
                 "duration": 120
             }));
         }
-    });
+    });*/
+    
+    // Discord Bot
+    let discord_token = "TON_TOKEN_DISCORD_ICI".to_string();
 
+    // On lance le bot en arrière-plan
+    tokio::spawn(async move {
+        discord::start_discord_bot(discord_token).await;
+    });
+    
+    
+    // Web Route/Server
     let app = Router::new()
         .route("/ws", get(websocket_handler))
         .fallback_service(ServeDir::new("public"))
+        .nest_service("/post/image", ServeDir::new("post/image"))
+        .nest_service("/post/music", ServeDir::new("post/music"))
         .with_state(tx);
 
-    let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
-    println!("🚀 Serveur actif sur http://0.0.0.0:3000");
+    let listener = tokio::net::TcpListener::bind("0.0.0.0:80").await.unwrap();
+    println!("🚀 Serveur actif sur http://0.0.0.0:80");
 
     axum::serve(listener, app).await.unwrap();
 }
@@ -75,46 +70,30 @@ async fn websocket_handler(
 async fn handle_socket(mut socket: WebSocket, tx: Arc<broadcast::Sender<String>>) {
     println!("Client connecté !");
 
+    // 1. Envoi initial de la DB au client
+    send_db_client(&mut socket).await;
+
     let mut rx = tx.subscribe();
 
     loop {
         tokio::select! {
-            // ==========================================
-            // SENS 1 : SERVEUR -> CLIENT (Notifications / Realtime)
-            // ==========================================
+            // Écoute du serveur vers le client (Broadcast)
             Ok(json_str) = rx.recv() => {
                 if socket.send(Message::Text(json_str)).await.is_err() {
                     break;
                 }
             }
 
-            // ==========================================
-            // SENS 2 : CLIENT -> SERVEUR (Événements / Actions)
-            // ==========================================
+            // Écoute du client vers le serveur
             msg = socket.recv() => {
-                if let Some(Ok(Message::Text(text))) = msg {
-                    // On parse l'événement entrant du client
-                    if let Ok(packet) = serde_json::from_str::<ClientEvent>(&text) {
+                // Si la connexion se coupe, on sort de la boucle
+                let text = match process_incoming_message(msg).await {
+                    Some(t) => t,
+                    None => break,
+                };
 
-                        // On route selon le nom de l'événement envoyé par le client
-                        match packet.event.as_str() {
-                            "music:play" => {
-                                let music_id = packet.data["id"].as_str().unwrap_or("inconnu");
-                                println!("📥 [Client -> Serveur] Événement 'music:play' reçu pour l'ID : {}", music_id);
-                                // TODO: Lancer la musique avec ton bot Discord ici
-                            },
-                            "music:stop" => {
-                                println!("📥 [Client -> Serveur] Événement 'music:stop' reçu.");
-                                // TODO: Stopper la musique
-                            },
-                            other => {
-                                println!("⚠️ Événement client inconnu : {}", other);
-                            }
-                        }
-                    }
-                } else {
-                    break; // Déconnexion du client
-                }
+                // On traite l'événement reçu
+                handle_client_event(&text, &tx);
             }
         }
     }

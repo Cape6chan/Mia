@@ -13,12 +13,12 @@ class SimpleSocket {
                     this.listeners[message.event](message.data);
                 }
             } catch (err) {
-                console.error("Erreur de parsing WebSocket:", err);
+                console.error("Error parsing WebSocket:", err);
             }
         };
 
-        this.ws.onopen = () => console.log("Connecté au serveur Rust !");
-        this.ws.onclose = () => console.log("Déconnecté.");
+        this.ws.onopen = () => console.log("Socket connected!");
+        this.ws.onclose = () => console.log("Socket Disconnected.");
     }
 
     // La méthode .on() que tu voulais !
@@ -35,7 +35,7 @@ class SimpleSocket {
 const protocol = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
 const host = window.location.host;
 const wsUrl = `${protocol}${host}/ws`;
-const socket = new SimpleSocket('ws://192.168.1.53:3000/ws'); //(wsUrl);
+const socket = new SimpleSocket(wsUrl);
 
 const log = console.log;
 const clamp = (val, min, max) => Math.min(Math.max(val, min), max)
@@ -857,7 +857,7 @@ socket.on("db:get", (data) => {
     if (!data) return;
     db = data;
 
-    setupImageSelector(db.file.image);
+    //setupImageSelector(db.file.image);
     setupAuthorSelect(db.author);
 
     const main_content = document.querySelector("#main-content");
@@ -1068,7 +1068,6 @@ player_loop_btn.onclick = () => {
 
 player_volume_slider.addEventListener('change', (e) => {
     const volume = e.target.value/100;
-    socket.emit("state:volume", volume);
     socket.emit("state:volume", volume);
 })
 

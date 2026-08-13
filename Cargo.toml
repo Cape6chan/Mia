@@ -10,9 +10,9 @@ serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 tower-http = { version = "0.5", features = ["fs"] }
 
-# [workspace]
-# members = [
-#     "core_engine",
-#     "api_server",
-#     "cli_tool",
-# ]
+# Discord & Audio
+serenity = { version = "0.12", features = ["builder", "gateway", "http", "model", "client", "voice"] }
+songbird = { version = "0.4" }
+
+# Symphonia avec le support complet (MP3, FLAC, WAV, et MP4/AAC)
+symphonia = { version = "0.5", features = ["aac", "isomp4", "mp3", "flac", "vorbis", "wav"] }
