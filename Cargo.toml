@@ -4,6 +4,9 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+dotenvy = "0.15"
+
+# Web & Socket
 tokio = { version = "1", features = ["full"] }
 axum = { version = "0.7", features = ["ws"] }
 serde = { version = "1.0", features = ["derive"] }

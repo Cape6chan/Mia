@@ -19,6 +19,12 @@ use tower_http::services::ServeDir;
 
 #[tokio::main]
 async fn main() {
+    dotenvy::dotenv().ok();
+    let web_url: String = std::env::var("WEB_URL")
+        .expect("Error : Environment variable WEB_URL doesn't exist in .env");
+    let discord_token = std::env::var("DISCORD_TOKEN")
+        .expect("Error : Environment variable DISCORD_TOKEN doesn't exist in .env");
+
     // TX Broadcast Socket
     let (tx, _) = broadcast::channel::<String>(100);
     let tx = Arc::new(tx);
@@ -36,16 +42,14 @@ async fn main() {
             }));
         }
     });*/
-    
-    // Discord Bot
-    let discord_token = "TON_TOKEN_DISCORD_ICI".to_string();
 
+    // Discord Bot
     // On lance le bot en arrière-plan
     tokio::spawn(async move {
         discord::start_discord_bot(discord_token).await;
     });
-    
-    
+
+
     // Web Route/Server
     let app = Router::new()
         .route("/ws", get(websocket_handler))
@@ -54,8 +58,8 @@ async fn main() {
         .nest_service("/post/music", ServeDir::new("post/music"))
         .with_state(tx);
 
-    let listener = tokio::net::TcpListener::bind("0.0.0.0:80").await.unwrap();
-    println!("🚀 Serveur actif sur http://0.0.0.0:80");
+    let listener = tokio::net::TcpListener::bind(&web_url).await.unwrap();
+    println!("🚀 Serveur actif sur {} ou directement sur http://test.6chan.fr", web_url);
 
     axum::serve(listener, app).await.unwrap();
 }
